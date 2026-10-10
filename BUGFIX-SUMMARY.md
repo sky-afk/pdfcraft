@@ -51,14 +51,6 @@
 - `gh run watch <id> -R sky-afk/pdfcraft --exit-status` 监控
 - 首次构建约 22 分钟（含依赖），改产物上传后重建约 5–10 分钟（rust-cache 命中）
 
-### 步骤 4：下载产物
-- Actions artifact 不支持单独下载内部文件；直连 GitHub 慢（实测 curl 仅 24KB/s）
-- 生成 Azure blob **签名直链**给迅雷多线程下载（直链约 10 分钟过期，需现取现用）：
-  ```
-  gh api repos/sky-afk/pdfcraft/actions/runs/<id>/artifacts  # 取 archive_download_url
-  curl -L -H "Authorization: token <gh_token>" -o NUL -w "%{url_effective}" <api_url>
-  ```
-
 ## 结果
 
 云端构建出内嵌思源黑体简中的 portable 版（74MB），简体中文界面方块乱码消除（待最终界面验证确认）。
