@@ -61,8 +61,6 @@
 
 1. **egui 原生应用字体乱码**：必须内嵌含目标字形的字体文件；OFL 字体可自由内嵌，随包附 OFL.txt 即可。微软雅黑等专有字体禁止内嵌分发。
 2. **OFL 字体内嵌零授权障碍**：Noto Sans SC / 思源黑体 / 霞鹜文楷均为 SIL OFL 1.1，免费商用、可内嵌分发，仅需随发行包附许可证文本。
-3. **Windows Rust 编译 OOM**：8GB 内存机器上 cargo release 编译多进程并发会触发 `rustc-LLVM ERROR: out of memory`，用 `CARGO_BUILD_JOBS=1` 单线程可解（代价是慢，故优先云端 Actions）。
-4. **C 盘空间保护**：`.rustup`/`.cargo` 用 junction 迁到 E 盘；npm 缓存、TEMP、打包工具缓存均可指到 E 盘。
 
 ---
 
