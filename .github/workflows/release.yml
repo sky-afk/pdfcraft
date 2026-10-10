@@ -87,6 +87,6 @@ jobs:
         run: ./packaging/windows/package.ps1 -Arch ${{ matrix.arch }}
       - uses: actions/upload-artifact@v4
         with:
-          name: release-windows-${{ matrix.arch }}
-          path: dist/release/*
+          name: portable-windows-${{ matrix.arch }}
+          path: dist/release/*-portable.zip
           if-no-files-found: error
