@@ -12,7 +12,7 @@ on:
         default: ""
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: release-${{ github.ref }}
@@ -85,8 +85,16 @@ jobs:
           CRAFT_FONTS_DIR: ${{ github.workspace }}/craft-fonts
           CRAFT_FONTS_REQUIRED: "1"
         run: ./packaging/windows/package.ps1 -Arch ${{ matrix.arch }}
-      - uses: actions/upload-artifact@v4
-        with:
-          name: portable-windows-${{ matrix.arch }}
-          path: dist/release/*-portable.zip
-          if-no-files-found: error
+      - name: Publish GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $tag = "v$env:PDFCRAFT_VERSION-zh"
+          if (gh release view $tag 2>$null) {
+            gh release delete $tag --cleanup-tag --yes
+          }
+          gh release create $tag dist/release/*.msi dist/release/*-portable.zip `
+            --target main `
+            --title "PdfCraft $env:PDFCRAFT_VERSION 简体中文界面修复版 (Windows x64)" `
+            --notes-file RELEASE-NOTES-zh.md
