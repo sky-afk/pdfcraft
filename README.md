@@ -39,8 +39,14 @@ Windows 安装/解压后将界面语言切换为简体中文即可，无需任�
 > macOS 包为 **ad-hoc 签名、未公证**（fork 无 Apple 开发者证书）。首次打开需右键 → 打开，
 > 或在终端执行 `xattr -dr com.apple.quarantine /Applications/PdfCraft.app` 后正常运行。
 
+> [!NOTE]
+> 由于本人没有 Mac 电脑环境，macOS 版本**未经实测安装验证**，仅通过与 Windows 版相同的字体嵌入
+> 方案构建（egui 界面字体编译期内嵌，与操作系统无关）。如在 Mac 上遇到安装或显示问题，
+> 欢迎在 [Issues](../../issues) 反馈。
+
 ## 许可与鸣谢
 
 - 软件本体版权归上游 [storytold/pdfcraft](https://github.com/storytold/pdfcraft)，MIT OR Apache-2.0
 - 内嵌字体 Noto Sans CJK SC：SIL OFL 1.1，许可证文本随便携包分发（`OFL-*.txt`）
 - 感谢 ArtCraft 社区制作 PdfCraft；若上游后续版本正式修复简中字体，请以官方发布为准
+
