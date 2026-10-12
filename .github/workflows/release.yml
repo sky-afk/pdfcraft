@@ -85,16 +85,80 @@ jobs:
           CRAFT_FONTS_DIR: ${{ github.workspace }}/craft-fonts
           CRAFT_FONTS_REQUIRED: "1"
         run: ./packaging/windows/package.ps1 -Arch ${{ matrix.arch }}
-      - name: Publish GitHub Release
-        shell: pwsh
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-windows-${{ matrix.arch }}
+          path: dist/release/
+          if-no-files-found: error
+
+  macos:
+    name: macOS universal
+    needs: version
+    runs-on: macos-latest
+    timeout-minutes: 360
+    env:
+      PDFCRAFT_VERSION: ${{ needs.version.outputs.version }}
+      PDFCRAFT_BUILD_DATE: ${{ needs.version.outputs.date }}
+    steps:
+      - uses: actions/checkout@v4
+      # Simplified-Chinese-only font set (Noto Sans CJK SC, OFL-1.1).
+      - name: Check out craft-fonts
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          repository: sky-afk/craft-fonts
+          ref: zh-only
+          path: craft-fonts
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin, x86_64-apple-darwin
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: release-macos-universal
+      - name: Apply version override
+        if: inputs.version != ''
+        shell: bash
+        run: cargo xtask version set "$PDFCRAFT_VERSION"
+      # No APPLE_CERTIFICATE secret on this fork: import-cert.sh warns and exits 0,
+      # so package.sh falls back to ad-hoc signing and skips notarization.
+      - name: Import signing certificate
+        shell: bash
+        run: packaging/macos/import-cert.sh
+      - name: Build, sign, package
+        shell: bash
+        env:
+          CRAFT_FONTS_DIR: ${{ github.workspace }}/craft-fonts
+          CRAFT_FONTS_REQUIRED: "1"
+        run: packaging/macos/package.sh --arch universal
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-macos
+          path: dist/release/
+          if-no-files-found: error
+
+  publish:
+    name: Publish GitHub Release
+    needs: [version, windows, macos]
+    runs-on: ubuntu-latest
+    env:
+      PDFCRAFT_VERSION: ${{ needs.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+      - name: Publish
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          $tag = "v$env:PDFCRAFT_VERSION-zh"
-          if (gh release view $tag 2>$null) {
-            gh release delete $tag --cleanup-tag --yes
-          }
-          gh release create $tag dist/release/*.msi dist/release/*-portable.zip `
-            --target main `
-            --title "PdfCraft $env:PDFCRAFT_VERSION 简体中文界面修复版 (Windows x64)" `
+          tag="v${PDFCRAFT_VERSION}-zh"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release delete "$tag" --cleanup-tag --yes
+          fi
+          gh release create "$tag" release-assets/* \
+            --target main \
+            --title "PdfCraft ${PDFCRAFT_VERSION} 简体中文界面修复版 (Windows x64 / macOS universal)" \
             --notes-file RELEASE-NOTES-zh.md
