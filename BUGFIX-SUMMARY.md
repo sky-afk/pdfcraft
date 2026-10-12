@@ -64,7 +64,37 @@
 
 ---
 
+## 扩展：macOS 版同样乱码（2026-10-12）
+
+### 分析
+
+- PDFCraft 是 Rust + egui 原生应用，**界面字体与操作系统无关**：字体由 `crates/fonts/build.rs`
+  在编译期从 `CRAFT_FONTS_DIR` 嵌入二进制，macOS/Windows 共用同一套 crates
+- 官方 Mac 包与 Windows 包根因相同：未内嵌 Hans 字形 → 简中特有字方块
+- `PDFCRAFT_SYSTEM_FONTS` 在 Mac 上同样不影响界面字体
+- 本地 Windows 机器无法构建 Mac 包，唯一路线仍是 GitHub Actions macOS runner
+
+### 改动
+
+- `release.yml` 新增 `macos` job：`runs-on: macos-latest`，targets `aarch64 + x86_64`，
+  `packaging/macos/package.sh --arch universal`，同样设置 `CRAFT_FONTS_DIR` + `CRAFT_FONTS_REQUIRED=1`
+- 签名：fork 无 `APPLE_CERTIFICATE` 等 secrets，`import-cert.sh` 检测到缺失会 warn 并 exit 0，
+  `package.sh` 自动降级为 **ad-hoc 签名、跳过公证**；产物可直接构建成功
+- 发布步骤从 windows job 抽出为独立 `publish` job：`windows` + `macos` 产物经
+  `actions/download-artifact`（merge-multiple）汇总后统一发布到 `v0.5.0-zh` Release
+- 未签名 DMG 在 Mac 上首次打开需右键→打开，或 `xattr -dr com.apple.quarantine PdfCraft.app`
+
+### 经验补充
+
+3. **egui 跨平台字体缺陷一次定位全平台**：界面字体嵌入发生在编译期，与目标 OS 无关；
+   修复一个平台的字体嵌入方案可直接平移到其他平台，只需对应平台的 CI runner。
+4. **macOS 无证书构建可自动降级**：上游 packaging 脚本对缺失签名 secrets 有 fallback
+   （ad-hoc 签名），fork 构建无需删除签名步骤，保留即可。
+
+---
+
 ## 待办
 
 - [x] 本文档已上传 GitHub（fork 仓库 `sky-afk/pdfcraft` 根目录）
 - [x] 云端构建版简体中文界面已解压验证，无方块
+- [ ] macOS universal DMG 云端构建并验证简中界面
